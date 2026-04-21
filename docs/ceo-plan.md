@@ -78,7 +78,7 @@ The user opens a GitHub link, reads the README in 2 minutes, runs `docker compos
 | Outside Voice | `/plan-eng-review` | Independent 2nd opinion | 1 | CLEAR | 6 findings: 1 genuine gap (Cart ownership), 1 tradeoff resolved (OrderSummaryDto), 4 dismissed (stale knowledge / already addressed) |
 | Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR (PLAN) | 13 issues found: 1 arch decision (UoW event dispatch), 12 obvious fixes applied to design doc |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | No UI scope — skipped |
-| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | Not run |
+| DX Review | `/devex-review` | Developer experience gaps | 1 | CONCERNS | score: 4/10, TTHW: 15min, 2 tested/6 inferred |
 
-- **UNRESOLVED:** 0 — all decisions resolved
-- **VERDICT:** CEO + ENG CLEARED — ready to implement. Run Day 1.
+- **UNRESOLVED:** 3 — NotFoundException returns 400 (should be 404); README is empty (TTHW 15min); no product seed data (Day 2 scope)
+- **VERDICT:** CEO + ENG CLEARED — Day 1 shipped. DX review surfaced 1 critical bug (NotFoundException 400 vs 404) and 1 high-priority gap (README). Fix before Day 2.
