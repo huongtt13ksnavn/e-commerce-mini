@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: src/ECommerce.API/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=ecommerce;Username=postgres;Password=postgres"
+      Jwt__Secret: "docker-compose-secret-at-least-32-chars!"
+      Jwt__Issuer: "ECommerce.API"
+      Jwt__Audience: "ECommerce.Client"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
