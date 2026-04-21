@@ -11,7 +11,8 @@ public sealed class JwtTokenGenerator(IConfiguration configuration) : IJwtTokenG
 {
     public (string Token, DateTime ExpiresAt) Generate(Guid userId, string email, string role)
     {
-        var secret = configuration["Jwt:Secret"]!;
+        var secret = configuration["Jwt:Secret"]
+            ?? throw new InvalidOperationException("Jwt:Secret is missing from configuration.");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiresAt = DateTime.UtcNow.AddHours(1);

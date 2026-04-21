@@ -17,18 +17,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IPublis
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var domainEvents = ChangeTracker.Entries<AggregateRoot>()
+        var aggregates = ChangeTracker.Entries<AggregateRoot>().ToList();
+        var domainEvents = aggregates
             .SelectMany(e => e.Entity.DomainEvents)
             .ToList();
+
+        aggregates.ForEach(e => e.Entity.ClearDomainEvents());
 
         var result = await base.SaveChangesAsync(cancellationToken);
 
         foreach (var domainEvent in domainEvents)
             await publisher.Publish(domainEvent, cancellationToken);
-
-        ChangeTracker.Entries<AggregateRoot>()
-            .ToList()
-            .ForEach(e => e.Entity.ClearDomainEvents());
 
         return result;
     }

@@ -18,9 +18,11 @@ public static class AuthEndpoints
 
         group.MapPost("/register", RegisterAsync)
             .AllowAnonymous()
+            .RequireRateLimiting("login")
             .Produces<object>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<ProblemDetails>(StatusCodes.Status422UnprocessableEntity);
+            .Produces<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)
+            .Produces<ProblemDetails>(StatusCodes.Status429TooManyRequests);
 
         group.MapPost("/login", LoginAsync)
             .AllowAnonymous()

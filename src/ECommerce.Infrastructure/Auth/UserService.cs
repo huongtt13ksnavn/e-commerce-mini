@@ -1,10 +1,13 @@
 using ECommerce.Application.Auth;
+using ECommerce.Domain.Exceptions;
 using ECommerce.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
 namespace ECommerce.Infrastructure.Auth;
 
-public sealed class UserService(UserManager<AppUser> userManager) : IUserService
+public sealed class UserService(
+    UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager) : IUserService
 {
     public async Task<Guid> RegisterAsync(string email, string password, CancellationToken ct = default)
     {
@@ -14,7 +17,7 @@ public sealed class UserService(UserManager<AppUser> userManager) : IUserService
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Registration failed: {errors}");
+            throw new RegistrationFailedException(errors);
         }
 
         await userManager.AddToRoleAsync(user, "User");
@@ -27,8 +30,8 @@ public sealed class UserService(UserManager<AppUser> userManager) : IUserService
         var user = await userManager.FindByEmailAsync(email);
         if (user is null) return null;
 
-        var isValid = await userManager.CheckPasswordAsync(user, password);
-        if (!isValid) return null;
+        var result = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        if (!result.Succeeded) return null;
 
         var roles = await userManager.GetRolesAsync(user);
         var role = roles.Contains("Admin") ? "Admin" : "User";

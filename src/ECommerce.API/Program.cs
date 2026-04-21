@@ -39,13 +39,15 @@ builder.Services.AddAuthorization();
 // UseRateLimiter must be registered before UseAuthentication in the pipeline
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("login", o =>
-    {
-        o.Window = TimeSpan.FromMinutes(1);
-        o.PermitLimit = 5;
-        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        o.QueueLimit = 0;
-    });
+    options.AddPolicy("login", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
