@@ -18,6 +18,10 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
             await WriteProblemAsync(context, StatusCodes.Status422UnprocessableEntity,
                 "Validation failed", ex.Errors.Select(e => e.ErrorMessage));
         }
+        catch (NotFoundException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status404NotFound, ex.Message);
+        }
         catch (DomainException ex)
         {
             await WriteProblemAsync(context, StatusCodes.Status400BadRequest, ex.Message);
