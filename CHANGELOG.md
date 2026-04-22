@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-04-22
+
+### Added
+- Cart aggregate with per-user ownership, quantity merging, and price snapshotting — re-adding a product captures the current price, not the price at first add
+- Four Cart use-cases via CQRS: `GetCart` (query), `AddCartItem`, `RemoveCartItem`, `ClearCart` (commands)
+- Four REST endpoints under `/api/cart` — all require authentication (`GET /api/cart`, `POST /api/cart/items`, `DELETE /api/cart/items/{productId}`, `DELETE /api/cart`)
+- Quantity validation: `> 0` and `<= 1000` per item (both validator and domain guard)
+- Domain guard on `AddCartItem`: deactivated products return 400 Bad Request
+- Two EF Core migrations: `AddCart` (Carts + CartItems tables, unique index on `UserId`) and `AddCartItemProductFK` (`CartItems.ProductId → Products.Id` with `Restrict` delete behaviour)
+- `ICartRepository` with `GetByUserIdAsync` and `Add`; infrastructure implementation uses EF with `Include(c => c.Items)`
+- 16 integration tests covering happy paths, auth enforcement (401 on all endpoints), negative paths (404/400/422), and silent no-ops (204 on remove/clear when nothing exists)
+- `AppFactory` (Testcontainers PostgreSQL) and `JwtHelper` test infrastructure for full in-process integration testing
+
+### Fixed
+- `DbUpdateException` middleware message generalised — previously said "product with that name may already exist", now returns "A database constraint was violated." to avoid misleading errors when cart unique-index violations occur
+- `NotFoundException` unsealed to allow `CartNotFoundException` inheritance
+
 ## [0.2.0] - 2026-04-22
 
 ### Added

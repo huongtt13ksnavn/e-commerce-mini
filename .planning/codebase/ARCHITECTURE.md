@@ -168,6 +168,10 @@ Minimal API with endpoint groups. All endpoints are registered in `Program.cs` v
 | POST | `/api/products` | AdminOnly | Create product |
 | PUT | `/api/products/{id}` | AdminOnly | Update product |
 | DELETE | `/api/products/{id}` | AdminOnly | Soft-delete product |
+| GET | `/api/cart` | Authenticated | Get current user's cart |
+| POST | `/api/cart/items` | Authenticated | Add item `{ productId, quantity }` |
+| DELETE | `/api/cart/items/{productId}` | Authenticated | Remove item from cart |
+| DELETE | `/api/cart` | Authenticated | Clear cart |
 | GET | `/healthz` | Anonymous | Health check (Postgres) |
 
 **Rate limiting:** Fixed-window policy `login` — 5 requests/minute per IP, applied to `/auth/register` and `/auth/login`. Returns HTTP 429 on violation.
