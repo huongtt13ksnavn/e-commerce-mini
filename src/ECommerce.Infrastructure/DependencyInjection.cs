@@ -1,9 +1,13 @@
 using ECommerce.Application.Auth;
 using ECommerce.Domain;
+using ECommerce.Domain.Entities;
+using ECommerce.Domain.Repositories;
+using ECommerce.Domain.ValueObjects;
 using ECommerce.Infrastructure.Auth;
 using ECommerce.Infrastructure.Identity;
 using ECommerce.Infrastructure.Persistence;
 using ECommerce.Infrastructure.Persistence.Interceptors;
+using ECommerce.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -44,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IProductRepository, ProductRepository>();
 
         return services;
     }
@@ -68,6 +73,7 @@ public static class DependencyInjection
 
         await SeedRolesAsync(roleManager);
         await SeedAdminAsync(userManager);
+        await SeedProductsAsync(db);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
@@ -90,5 +96,28 @@ public static class DependencyInjection
         var admin = AppUser.Create(adminEmail);
         await userManager.CreateAsync(admin, adminPassword);
         await userManager.AddToRoleAsync(admin, "Admin");
+    }
+
+    private static async Task SeedProductsAsync(AppDbContext db)
+    {
+        if (await db.Products.AnyAsync())
+            return;
+
+        var products = new[]
+        {
+            Product.Create("Wireless Noise-Cancelling Headphones", "Over-ear headphones with 30h battery and active noise cancellation.", Money.Of(149.99m), 50),
+            Product.Create("Mechanical Gaming Keyboard", "Tenkeyless layout with Cherry MX Red switches and RGB backlight.", Money.Of(89.99m), 75),
+            Product.Create("4K USB-C Monitor", "27-inch IPS panel, 144 Hz, with USB-C power delivery.", Money.Of(499.99m), 30),
+            Product.Create("Ergonomic Office Chair", "Lumbar support, adjustable armrests, breathable mesh back.", Money.Of(299.99m), 20),
+            Product.Create("Portable SSD 1TB", "USB 3.2 Gen 2 with read speeds up to 1050 MB/s.", Money.Of(109.99m), 100),
+            Product.Create("Smart LED Desk Lamp", "Touch dimmer, USB-A charging port, color temperature control.", Money.Of(39.99m), 200),
+            Product.Create("Webcam 1080p 60fps", "Wide-angle lens, built-in dual microphone, plug-and-play.", Money.Of(69.99m), 60),
+            Product.Create("Wireless Mouse", "Ergonomic shape, 70-day battery life, silent clicks.", Money.Of(29.99m), 150),
+            Product.Create("USB-C Hub 7-in-1", "HDMI 4K, 3× USB-A, SD/microSD, 100W PD passthrough.", Money.Of(49.99m), 80),
+            Product.Create("Laptop Stand Adjustable", "Aluminium, 6 height levels, folds flat for travel.", Money.Of(34.99m), 120),
+        };
+
+        db.Products.AddRange(products);
+        await db.SaveChangesAsync();
     }
 }

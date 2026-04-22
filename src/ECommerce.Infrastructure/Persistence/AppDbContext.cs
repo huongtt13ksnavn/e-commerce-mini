@@ -1,4 +1,5 @@
 using ECommerce.Domain.Common;
+using ECommerce.Domain.Entities;
 using ECommerce.Infrastructure.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -9,6 +10,8 @@ namespace ECommerce.Infrastructure.Persistence;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IPublisher publisher)
     : IdentityDbContext<AppUser>(options)
 {
+    public DbSet<Product> Products => Set<Product>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
