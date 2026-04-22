@@ -15,26 +15,30 @@ public static class CartEndpoints
 {
     public static void MapCartEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/cart")
+        app.MapGet("/api/cart", GetCartAsync)
             .WithTags("Cart")
-            .RequireAuthorization();
-
-        group.MapGet("/", GetCartAsync)
+            .RequireAuthorization()
             .Produces<CartDto>()
             .Produces(StatusCodes.Status401Unauthorized);
 
-        group.MapPost("/items", AddItemAsync)
+        app.MapPost("/api/cart/items", AddItemAsync)
+            .WithTags("Cart")
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
             .Produces<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)
             .Produces(StatusCodes.Status401Unauthorized);
 
-        group.MapDelete("/items/{productId:guid}", RemoveItemAsync)
+        app.MapDelete("/api/cart/items/{productId}", RemoveItemAsync)
+            .WithTags("Cart")
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized);
 
-        group.MapDelete("/", ClearCartAsync)
+        app.MapDelete("/api/cart", ClearCartAsync)
+            .WithTags("Cart")
+            .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized);
     }
@@ -78,7 +82,8 @@ public static class CartEndpoints
     private static bool TryResolveUserId(ClaimsPrincipal user, out UserId userId)
     {
         userId = default!;
-        var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var sub = user.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? user.FindFirstValue(JwtRegisteredClaimNames.Sub);
         if (sub is null || !Guid.TryParse(sub, out var guid)) return false;
         userId = new UserId(guid);
         return true;

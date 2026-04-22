@@ -1,10 +1,7 @@
-﻿namespace ECommerce.IntegrationTests;
+namespace ECommerce.IntegrationTests;
 
-public class UnitTest1
+public class UnitTest1 : IClassFixture<AppFactory>
 {
     [Fact]
-    public void Test1()
-    {
-
-    }
+    public void Placeholder_Pass() { }
 }

@@ -8,7 +8,7 @@ namespace ECommerce.IntegrationTests.Cart;
 [Collection("Cart")]
 public sealed class CartTests(AppFactory factory) : IClassFixture<AppFactory>
 {
-    private static readonly Guid UserId = Guid.NewGuid();
+    private readonly Guid UserId = Guid.NewGuid();
     private static readonly Guid AdminId = Guid.NewGuid();
 
     // Helpers ----------------------------------------------------------------
@@ -16,15 +16,14 @@ public sealed class CartTests(AppFactory factory) : IClassFixture<AppFactory>
     private HttpClient UserClient() => factory.CreateAuthenticatedClient(UserId.ToString());
     private HttpClient AdminClient() => factory.CreateAuthenticatedClient(AdminId.ToString(), "Admin");
 
-    private async Task<Guid> CreateProductAsync(string name = "Widget", decimal price = 9.99m)
+    private async Task<Guid> CreateProductAsync(string? name = null, decimal price = 9.99m)
     {
         var admin = AdminClient();
         var response = await admin.PostAsJsonAsync("/api/products", new
         {
-            Name = name,
+            Name = name ?? $"Product-{Guid.NewGuid():N}",
             Description = "Test product",
             Price = price,
-            Currency = "USD",
             Stock = 100
         });
         response.EnsureSuccessStatusCode();
@@ -75,7 +74,7 @@ public sealed class CartTests(AppFactory factory) : IClassFixture<AppFactory>
 
         // Admin updates price
         await AdminClient().PutAsJsonAsync($"/api/products/{productId}",
-            new { Name = "MergeProduct", Price = 20.00m, Currency = "USD" });
+            new { Name = "MergeProduct", Description = "Test product", Price = 20.00m, Stock = 100 });
 
         await client.PostAsJsonAsync("/api/cart/items", new { ProductId = productId, Quantity = 2 });
 
@@ -148,7 +147,7 @@ public sealed class CartTests(AppFactory factory) : IClassFixture<AppFactory>
     public async Task AddItem_DeactivatedProduct_Returns400()
     {
         var productId = await CreateProductAsync("DeactivatedProduct");
-        await AdminClient().PatchAsync($"/api/products/{productId}/deactivate", null);
+        await AdminClient().DeleteAsync($"/api/products/{productId}");
 
         var response = await UserClient().PostAsJsonAsync("/api/cart/items",
             new { ProductId = productId, Quantity = 1 });
