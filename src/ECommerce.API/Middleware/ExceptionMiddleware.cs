@@ -35,7 +35,7 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
         catch (DbUpdateException)
         {
             await WriteProblemAsync(context, StatusCodes.Status422UnprocessableEntity,
-                "A database constraint was violated. A product with that name may already exist.");
+                "A database constraint was violated.");
         }
         catch (UnauthorizedAccessException ex)
         {

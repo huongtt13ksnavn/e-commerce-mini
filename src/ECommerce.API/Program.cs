@@ -79,6 +79,7 @@ app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapProductEndpoints();
+app.MapCartEndpoints();
 app.MapHealthEndpoints();
 
 app.Run();
