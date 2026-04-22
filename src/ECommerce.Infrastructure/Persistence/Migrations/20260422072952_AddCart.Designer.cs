@@ -3,6 +3,7 @@ using System;
 using ECommerce.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ECommerce.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422072952_AddCart")]
+    partial class AddCart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -295,6 +298,7 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<Guid>("ProductId")
+                                .ValueGeneratedOnAdd()
                                 .HasColumnType("uuid");
 
                             b1.Property<int>("Quantity")
@@ -302,18 +306,10 @@ namespace ECommerce.Infrastructure.Persistence.Migrations
 
                             b1.HasKey("CartId", "ProductId");
 
-                            b1.HasIndex("ProductId");
-
                             b1.ToTable("CartItems", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("CartId");
-
-                            b1.HasOne("ECommerce.Domain.Entities.Product", null)
-                                .WithMany()
-                                .HasForeignKey("ProductId")
-                                .OnDelete(DeleteBehavior.Restrict)
-                                .IsRequired();
 
                             b1.OwnsOne("ECommerce.Domain.ValueObjects.Money", "UnitPrice", b2 =>
                                 {

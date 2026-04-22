@@ -11,6 +11,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IPublis
     : IdentityDbContext<AppUser>(options)
 {
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Cart> Carts => Set<Cart>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

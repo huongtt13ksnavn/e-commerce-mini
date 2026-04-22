@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ICartRepository, CartRepository>();
 
         return services;
     }
