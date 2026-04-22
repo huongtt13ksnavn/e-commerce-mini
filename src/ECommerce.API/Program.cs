@@ -34,7 +34,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
 
 // UseRateLimiter must be registered before UseAuthentication in the pipeline
 builder.Services.AddRateLimiter(options =>
@@ -75,6 +78,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
+app.MapProductEndpoints();
 app.MapHealthEndpoints();
 
 app.Run();

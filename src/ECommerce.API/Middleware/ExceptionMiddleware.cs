@@ -1,6 +1,7 @@
 using ECommerce.Domain.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace ECommerce.API.Middleware;
@@ -25,6 +26,16 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
         catch (DomainException ex)
         {
             await WriteProblemAsync(context, StatusCodes.Status400BadRequest, ex.Message);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status409Conflict,
+                "The resource was modified by another request. Please retry.");
+        }
+        catch (DbUpdateException)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status422UnprocessableEntity,
+                "A database constraint was violated. A product with that name may already exist.");
         }
         catch (UnauthorizedAccessException ex)
         {
