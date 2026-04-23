@@ -11,7 +11,7 @@ Clean Architecture is an application of the Dependency Inversion Principle at th
 
 ## Why for E-Commerce Specifically
 
-E-commerce domains have natural invariants that pure CRUD models cannot protect. A cart item must have a positive quantity. A product price must be a valid monetary amount. An order cannot be cancelled once it has shipped. These rules exist regardless of which endpoint is called or which developer writes the handler. Clean Architecture places these rules in the Domain layer, where they are enforced by domain methods (`Cart.AddItem`, `Order.Cancel`, `Product.Deactivate`) rather than validators that can be bypassed. The domain boundary is also the unit of testability: because `ECommerce.Domain` has no infrastructure dependencies, domain logic can be tested with plain `xunit` — no `WebApplicationFactory`, no Testcontainers, no database. The e-commerce domain has three natural aggregate boundaries (Product, Cart, Order), each with its own consistency requirements and lifecycle, which maps cleanly onto Clean Architecture's aggregate-per-repository pattern. See [ADR-001](adr/001-clean-architecture.md) for the full decision record.
+E-commerce domains have natural invariants that pure CRUD models cannot protect. A cart item must have a positive quantity. A product price must be a valid monetary amount. A cart item's price is snapshotted at add-time and cannot be silently changed. These rules exist regardless of which endpoint is called or which developer writes the handler. Clean Architecture places these rules in the Domain layer, where they are enforced by domain methods (`Cart.AddItem`, `Product.Deactivate`) rather than validators that can be bypassed. The domain boundary is also the unit of testability: because `ECommerce.Domain` has no infrastructure dependencies, domain logic can be tested with plain `xunit` — no `WebApplicationFactory`, no Testcontainers, no database. The e-commerce domain has two natural aggregate boundaries (Product, Cart), each with its own consistency requirements and lifecycle, which maps cleanly onto Clean Architecture's aggregate-per-repository pattern. See [ADR-001](adr/001-clean-architecture.md) for the full decision record.
 
 ## Where CQRS Fits
 
@@ -19,7 +19,7 @@ E-commerce reads vastly outnumber writes. Product listing, cart retrieval, and o
 
 ## DDD Aggregate Boundaries
 
-Domain-Driven Design models business concepts as aggregates — clusters of objects that are always consistent together, modified through a single root, and persisted in a single transaction. This project has three aggregates. `Product` owns its pricing and activation state; the only way to change a price is through `Product.UpdatePrice(Money newPrice)`, which enforces the `Money` value object's invariants (non-negative amount, known currency). `Cart` owns its item collection; `Cart.AddItem` snapshots the current product price at add-time — if the product price changes later, the cart still shows the original price, which is correct e-commerce behavior. `Order` owns its lifecycle; `Order.Cancel()` throws a `DomainException` if the order is not in `Placed` status, making invalid transitions unrepresentable. Aggregate boundaries align with transaction boundaries: no command modifies more than one aggregate root in a single `CommitAsync()`. EF Core has no annotations on domain entities — all mapping lives in `Infrastructure/Persistence/Configurations/`. See [ADR-003](adr/003-ddd-aggregates.md) for the full decision record.
+Domain-Driven Design models business concepts as aggregates — clusters of objects that are always consistent together, modified through a single root, and persisted in a single transaction. This project implements two aggregates. `Product` owns its pricing and activation state; the only way to mutate it is through `Product.Update(...)`, which accepts a `Money` value object that enforces its invariants (non-negative amount, known currency). `Cart` owns its item collection; `Cart.AddItem` snapshots the current product price at add-time — if the product price changes later, the cart still shows the original price, which is correct e-commerce behavior. Aggregate boundaries align with transaction boundaries: no command modifies more than one aggregate root in a single `CommitAsync()`. EF Core has no annotations on domain entities — all mapping lives in `Infrastructure/Persistence/Configurations/`. See [ADR-003](adr/003-ddd-aggregates.md) for the full decision record.
 
 ## Conscious Trade-offs
 
@@ -41,10 +41,10 @@ Two architectural decisions deserve explicit justification. First, this is a mon
 │   Depends on Domain only.                               │
 ├─────────────────────────────────────────────────────────┤
 │                    Domain Layer                         │
-│   Aggregates: Product · Cart · Order                    │
-│   Value Objects: Money · CartItem · UserId              │
+│   Aggregates: Product · Cart                            │
+│   Value Objects: Money · UserId                         │
 │   Interfaces: IProductRepository · ICartRepository ·   │
-│               IOrderRepository · IUnitOfWork            │
+│               IUnitOfWork                               │
 │   Zero NuGet dependencies.                              │
 ├─────────────────────────────────────────────────────────┤
 │                Infrastructure Layer                     │
@@ -64,6 +64,6 @@ Two architectural decisions deserve explicit justification. First, this is a mon
 
 **Application** (`src/ECommerce.Application/`) contains all use cases as MediatR `IRequest<TResponse>` records and their handlers, FluentValidation validators, pipeline behaviors, and service interfaces (`IJwtTokenGenerator`, `IUserService`). It depends on Domain only. The boundary exists to separate orchestration (fetch aggregate, call domain method, commit, return DTO) from both the domain rules it orchestrates and the infrastructure it uses. No EF Core, no HTTP primitives, no ASP.NET types.
 
-**Infrastructure** (`src/ECommerce.Infrastructure/`) implements every interface defined in Domain and Application. It contains `AppDbContext`, EF entity configurations, `ProductRepository`, `CartRepository`, `OrderRepository`, `UnitOfWork`, `AuditInterceptor`, `UserService`, and `JwtTokenGenerator`. It depends on Domain and Application. The boundary exists so that swapping PostgreSQL for another database, or replacing JWT with a different auth scheme, is bounded to this layer. No application or domain code changes.
+**Infrastructure** (`src/ECommerce.Infrastructure/`) implements every interface defined in Domain and Application. It contains `AppDbContext`, EF entity configurations, `ProductRepository`, `CartRepository`, `UnitOfWork`, `AuditInterceptor`, `UserService`, and `JwtTokenGenerator`. It depends on Domain and Application. The boundary exists so that swapping PostgreSQL for another database, or replacing JWT with a different auth scheme, is bounded to this layer. No application or domain code changes.
 
 **API** (`src/ECommerce.API/`) is the composition root. Minimal API endpoint groups map HTTP verbs to MediatR dispatches and map results to HTTP responses. `Program.cs` wires all layers together via `AddApplication()` and `AddInfrastructure()`. The boundary exists to keep HTTP concerns out of the application layer: if a handler grows beyond dispatch + response mapping, it has leaked logic that belongs in Application. This layer contains no business logic.

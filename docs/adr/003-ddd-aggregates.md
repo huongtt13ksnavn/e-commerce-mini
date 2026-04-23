@@ -17,7 +17,7 @@ A second concern: EF Core annotations on domain entities (`[Key]`, `[Required]`,
 Model `Product`, `Cart`, and `Order` as DDD aggregates:
 
 - **Factory methods only** — no public constructors. `Product.Create(name, price)`, `Cart.Create(userId)` are the only way to construct valid instances.
-- **Domain methods enforce invariants** — `Cart.AddItem(productId, quantity, unitPrice)` rejects quantity ≤ 0. `Order.Cancel()` rejects orders not in `Placed` status. The rule lives where the data lives.
+- **Domain methods enforce invariants** — `Cart.AddItem(productId, quantity, unitPrice)` rejects quantity ≤ 0. `Product.Deactivate()` prevents reactivation once deactivated. The rule lives where the data lives.
 - **No EF annotations on domain entities** — all EF mapping lives in `Infrastructure/Persistence/Configurations/{Entity}Configuration.cs` implementing `IEntityTypeConfiguration<T>`. Value objects (`Money`, `CartItem`) are configured as owned entities with value converters for typed IDs (`ProductId`, `OrderId`).
 - **Price snapshots** — `CartItem.UnitPrice` is set at add-time from the current product price and never updated. If the product price changes after the item is added, the cart shows the original price. This is intentional e-commerce behavior.
 

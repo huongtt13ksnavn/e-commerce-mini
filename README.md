@@ -31,7 +31,7 @@ The API starts at **http://localhost:5000**. Explore via the Scalar UI at **http
 
 ## Why These Patterns
 
-**Clean Architecture** enforces a strict dependency rule: Domain → Application → Infrastructure → API, never reversed. The Domain layer compiles with zero NuGet dependencies — business logic has no knowledge of databases, HTTP, or ASP.NET. This means the domain is testable without mocking EF Core or ASP.NET Identity, and replacing PostgreSQL with another database touches only the Infrastructure layer.
+**Clean Architecture** enforces a strict dependency rule: Domain ← Application ← Infrastructure ← API, never reversed (arrows point toward what is depended on). The Domain layer compiles with zero NuGet dependencies — business logic has no knowledge of databases, HTTP, or ASP.NET. This means the domain is testable without mocking EF Core or ASP.NET Identity, and replacing PostgreSQL with another database touches only the Infrastructure layer.
 
 **CQRS + MediatR** fits e-commerce because reads (product listing, cart retrieval, order history) vastly outnumber writes. Separating commands from queries makes that asymmetry explicit in the codebase. The MediatR pipeline — ExceptionHandling → Logging → Validation — applies cross-cutting concerns uniformly to every command and query without scattering try/catch across handlers.
 

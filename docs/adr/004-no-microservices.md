@@ -27,7 +27,7 @@ The internal architecture (Clean Architecture with bounded domains in `ECommerce
 - Integration tests use a single `WebApplicationFactory` with Testcontainers — one real PostgreSQL instance, no service stubs.
 
 **Negative:**
-- The entire application deploys as one unit. A change to the product catalog requires redeploying the order service.
+- The entire application deploys as one unit. A change to the product catalog requires redeploying the entire application.
 - A single database means schema migrations affect all bounded contexts simultaneously. At high team count, this creates coordination overhead.
 - If any bounded context needs a different scaling profile (e.g., the catalog needs read replicas), the entire application must be replicated rather than just the relevant service.
 
