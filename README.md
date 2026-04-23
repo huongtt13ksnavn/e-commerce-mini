@@ -29,20 +29,28 @@ The API starts at **http://localhost:5000**. Explore via the Scalar UI at **http
 | Orders | `POST /api/orders`, `GET /api/orders`, `GET /api/orders/{id}`, `PATCH /api/orders/{id}/cancel` |
 | Health | `GET /healthz` |
 
-## Architecture
+## Why These Patterns
 
-4-layer Clean Architecture: Domain → Application → Infrastructure → API.
+**Clean Architecture** enforces a strict dependency rule: Domain → Application → Infrastructure → API, never reversed. The Domain layer compiles with zero NuGet dependencies — business logic has no knowledge of databases, HTTP, or ASP.NET. This means the domain is testable without mocking EF Core or ASP.NET Identity, and replacing PostgreSQL with another database touches only the Infrastructure layer.
+
+**CQRS + MediatR** fits e-commerce because reads (product listing, cart retrieval, order history) vastly outnumber writes. Separating commands from queries makes that asymmetry explicit in the codebase. The MediatR pipeline — ExceptionHandling → Logging → Validation — applies cross-cutting concerns uniformly to every command and query without scattering try/catch across handlers.
+
+**DDD Aggregates** prevent invalid state by construction. `Cart`, `Order`, and `Product` each enforce their own invariants through domain methods (`Cart.AddItem`, `Order.Cancel`, `Product.Deactivate`). HTTP handlers cannot bypass these rules — there is no public setter to call. Aggregate boundaries align with transaction boundaries: no command spans more than one aggregate root.
 
 ```
-API Layer          Minimal APIs, JWT auth, rate limiting, middleware
-Application Layer  CQRS commands/queries via MediatR 12, FluentValidation pipeline
-Domain Layer       Aggregates (Product, Cart, Order), value objects, domain events
-Infrastructure     EF Core 10 + PostgreSQL, ASP.NET Identity, JWT generation
+┌──────────────┐     ┌─────────────────┐     ┌────────────────────┐
+│   Domain     │◄────│   Application   │◄────│   Infrastructure   │
+│  (no deps)   │     │  (Domain only)  │     │  (EF Core, JWT)    │
+└──────────────┘     └─────────────────┘     └────────────────────┘
+                             ▲                         ▲
+                             └──────────┬──────────────┘
+                                   ┌────┴────┐
+                                   │   API   │
+                                   └─────────┘
 ```
 
-Key patterns: CQRS with MediatR pipeline behaviors (ExceptionHandling → Logging → Validation), DDD aggregates with domain events dispatched via `AppDbContext.SaveChangesAsync()`, repository interfaces in Domain with EF Core implementations in Infrastructure.
-
-See [`docs/design.md`](docs/design.md) for the full architecture spec and [`docs/ceo-plan.md`](docs/ceo-plan.md) for scope decisions.
+→ Full narrative: [docs/architecture.md](docs/architecture.md)
+→ Decision records: [docs/adr/](docs/adr/)
 
 ## Local Development (without Docker)
 
