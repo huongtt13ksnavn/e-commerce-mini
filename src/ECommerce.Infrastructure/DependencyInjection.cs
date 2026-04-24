@@ -30,6 +30,13 @@ public static class DependencyInjection
 
         services.AddSingleton<AuditInterceptor>();
 
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+        if (redisConnectionString is not null)
+            services.AddStackExchangeRedisCache(options =>
+                options.Configuration = redisConnectionString);
+        else
+            services.AddDistributedMemoryCache();
+
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString);
