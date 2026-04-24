@@ -26,8 +26,14 @@ public sealed class CachingBehavior<TRequest, TResponse>(
             if (cached is not null)
             {
                 logger.LogDebug("Cache hit for {Key}", cacheable.CacheKey);
-                return JsonSerializer.Deserialize<TResponse>(cached)!;
+                var deserialized = JsonSerializer.Deserialize<TResponse>(cached);
+                if (deserialized is not null)
+                    return deserialized;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -45,6 +51,10 @@ public sealed class CachingBehavior<TRequest, TResponse>(
                 serialized,
                 new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = cacheable.CacheDuration },
                 cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // cancellation after handler succeeded — result is valid, just don't cache
         }
         catch (Exception ex)
         {
