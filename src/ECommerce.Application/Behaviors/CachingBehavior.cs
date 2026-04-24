@@ -34,11 +34,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
                 logger.LogDebug("Cached null for {Key}, falling through to handler", cacheable.CacheKey);
             }
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Cache read failed for {Key}, falling through to handler", cacheable.CacheKey);
             return await next(cancellationToken);

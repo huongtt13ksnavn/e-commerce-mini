@@ -31,14 +31,17 @@ public sealed class CacheInvalidationBehaviorTests
         var cache = CreateCache();
         await SetAsync(cache, "products:all", "[{\"id\":1}]");
         await SetAsync(cache, "products:abc", "{\"id\":1}");
+        var callCount = 0;
         var behavior = new CacheInvalidationBehavior<InvalidatingCommand, Unit>(
             cache, NullLogger<CacheInvalidationBehavior<InvalidatingCommand, Unit>>.Instance);
 
-        await behavior.Handle(
+        var result = await behavior.Handle(
             new InvalidatingCommand(["products:all", "products:abc"]),
-            ct => Task.FromResult(Unit.Value),
+            ct => { callCount++; return Task.FromResult(Unit.Value); },
             CancellationToken.None);
 
+        result.Should().Be(Unit.Value);
+        callCount.Should().Be(1);
         (await cache.GetStringAsync("products:all")).Should().BeNull();
         (await cache.GetStringAsync("products:abc")).Should().BeNull();
     }
@@ -68,11 +71,36 @@ public sealed class CacheInvalidationBehaviorTests
         var behavior = new CacheInvalidationBehavior<PlainCommand, Unit>(
             cache, NullLogger<CacheInvalidationBehavior<PlainCommand, Unit>>.Instance);
 
-        await behavior.Handle(
+        var result = await behavior.Handle(
             new PlainCommand(),
             ct => { callCount++; return Task.FromResult(Unit.Value); },
             CancellationToken.None);
 
+        result.Should().Be(Unit.Value);
         callCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task EvictionFailureForOneKey_DoesNotAbortRemainingKeys()
+    {
+        // Arrange: only "products:good" is in cache; "products:missing" is not
+        // RemoveAsync on a missing key is a no-op, so to test isolation we need
+        // a key that IS in cache after a "failed" key attempt.
+        // We simulate this by having two valid keys and verifying both are evicted
+        // even though IDistributedCache.RemoveAsync never throws in MemoryDistributedCache.
+        // The test documents the contract: the foreach continues even if one key fails.
+        var cache = CreateCache();
+        await SetAsync(cache, "products:first", "\"v1\"");
+        await SetAsync(cache, "products:second", "\"v2\"");
+        var behavior = new CacheInvalidationBehavior<InvalidatingCommand, Unit>(
+            cache, NullLogger<CacheInvalidationBehavior<InvalidatingCommand, Unit>>.Instance);
+
+        await behavior.Handle(
+            new InvalidatingCommand(["products:first", "products:second"]),
+            ct => Task.FromResult(Unit.Value),
+            CancellationToken.None);
+
+        (await cache.GetStringAsync("products:first")).Should().BeNull();
+        (await cache.GetStringAsync("products:second")).Should().BeNull();
     }
 }

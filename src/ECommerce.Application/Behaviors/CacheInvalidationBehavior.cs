@@ -28,11 +28,7 @@ public sealed class CacheInvalidationBehavior<TRequest, TResponse>(
                 await cache.RemoveAsync(key, cancellationToken);
                 logger.LogDebug("Evicted cache key {Key}", key);
             }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogWarning(ex, "Cache eviction failed for {Key}", key);
             }
