@@ -1,3 +1,4 @@
+using ECommerce.Application.Caching;
 using MediatR;
 
 namespace ECommerce.Application.Products.Commands.UpdateProduct;
@@ -8,4 +9,7 @@ public sealed record UpdateProductCommand(
     string Description,
     decimal Price,
     int Stock,
-    string? ImageUrl) : IRequest;
+    string? ImageUrl) : IRequest, ICacheInvalidator
+{
+    public IReadOnlyList<string> CacheKeys => ["products:all", $"products:{Id}"];
+}
