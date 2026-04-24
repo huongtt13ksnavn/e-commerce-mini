@@ -31,9 +31,12 @@ public static class DependencyInjection
         services.AddSingleton<AuditInterceptor>();
 
         var redisConnectionString = configuration.GetConnectionString("Redis");
-        if (redisConnectionString is not null)
+        if (!string.IsNullOrEmpty(redisConnectionString))
             services.AddStackExchangeRedisCache(options =>
-                options.Configuration = redisConnectionString);
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "ecommerce:";
+            });
         else
             services.AddDistributedMemoryCache();
 
