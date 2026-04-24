@@ -64,13 +64,14 @@ public sealed class ProductCacheTests(AppFactory factory) : IClassFixture<AppFac
         var firstGet = await factory.CreateClient().GetFromJsonAsync<ProductDto>($"/api/products/{id}");
         firstGet.Should().NotBeNull();
 
-        await admin.PutAsJsonAsync($"/api/products/{id}", new
+        var update = await admin.PutAsJsonAsync($"/api/products/{id}", new
         {
             Name = "After-Update",
             Description = "Updated",
             Price = 20.00m,
             Stock = 2,
         });
+        update.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var secondGet = await factory.CreateClient().GetFromJsonAsync<ProductDto>($"/api/products/{id}");
         secondGet!.Name.Should().Be("After-Update");
