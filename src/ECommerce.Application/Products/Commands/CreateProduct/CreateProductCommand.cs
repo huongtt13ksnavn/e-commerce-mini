@@ -1,3 +1,4 @@
+using ECommerce.Application.Caching;
 using MediatR;
 
 namespace ECommerce.Application.Products.Commands.CreateProduct;
@@ -7,4 +8,7 @@ public sealed record CreateProductCommand(
     string Description,
     decimal Price,
     int Stock,
-    string? ImageUrl) : IRequest<Guid>;
+    string? ImageUrl) : IRequest<Guid>, ICacheInvalidator
+{
+    public IReadOnlyList<string> CacheKeys => ["products:all"];
+}

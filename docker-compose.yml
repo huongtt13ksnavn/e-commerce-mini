@@ -15,6 +15,16 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build:
       context: .
@@ -24,11 +34,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=ecommerce;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis: "redis:6379"
       Jwt__Secret: "docker-compose-secret-at-least-32-chars!"
       Jwt__Issuer: "ECommerce.API"
       Jwt__Audience: "ECommerce.Client"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
 volumes:
