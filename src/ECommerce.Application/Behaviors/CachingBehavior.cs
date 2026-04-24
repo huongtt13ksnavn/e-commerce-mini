@@ -25,10 +25,13 @@ public sealed class CachingBehavior<TRequest, TResponse>(
             var cached = await cache.GetStringAsync(cacheable.CacheKey, cancellationToken);
             if (cached is not null)
             {
-                logger.LogDebug("Cache hit for {Key}", cacheable.CacheKey);
                 var deserialized = JsonSerializer.Deserialize<TResponse>(cached);
                 if (deserialized is not null)
+                {
+                    logger.LogDebug("Cache hit for {Key}", cacheable.CacheKey);
                     return deserialized;
+                }
+                logger.LogDebug("Cached null for {Key}, falling through to handler", cacheable.CacheKey);
             }
         }
         catch (OperationCanceledException)
